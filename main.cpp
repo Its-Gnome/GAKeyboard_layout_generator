@@ -8,8 +8,8 @@ using namespace std;
 
 // parameter
 //////////////////
-int individual_number = 80;   // 個体生成数
-int generation_number = 8000; // 世代数
+int individual_number = 360;   // 個体生成数
+int generation_number = 36000; // 世代数
 /////////////////
 
 // あらかじめ配置を固定するキーを定義
@@ -30,7 +30,12 @@ map<int, int> fix_key = {
     {(int)('C' - 65), 22},
     {(int)('V' - 65), 23},
     {(int)('A' - 65), 10},
+    {(int)('Q' - 65), 0},
     {(int)('W' - 65), 1},
+    {(int)('J' - 65), 27},
+    {(int)('K' - 65), 17},
+    {(int)('H' - 65), 26},
+    {(int)('L' - 65), 28},
 };
 
 /*
