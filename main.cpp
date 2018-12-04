@@ -6,60 +6,67 @@
 #include <time.h>
 using namespace std;
 
+// parameter
+//////////////////
+int individual_number = 80;   // 個体生成数
+int generation_number = 8000; // 世代数
+/////////////////
+
+// あらかじめ配置を固定するキーを定義
+/*
+layout Index(A-Z + ;,./)
+ .---------------------------------------------------------------------.
+ |  0   |  1   |  2   |  3   |  4   |  5   |  6   |  7   |  8   |  9   |
+ |---------------------------------------------------------------------|
+ |  10  |  11  |  12  |  13  |  14  |  15  |  16  |  17  |  18  |  19  |
+ |---------------------------------------------------------------------|
+ |  20  |  21  |  22  |  23  |  24  |  25  |  26  |  27  |  28  |  29  |
+ ,---------------------------------------------------------------------,
+*/
+// key, index
+map<int, int> fix_key = {
+    {(int)('Z' - 65), 20}, // Zを20番に固定
+    {(int)('X' - 65), 21},
+    {(int)('C' - 65), 22},
+    {(int)('V' - 65), 23},
+    {(int)('A' - 65), 10},
+    {(int)('W' - 65), 1},
+};
+
+/*
+Scores of arrangement
+ .-----------------------------------------------------------.
+ |  1  |  3  |  4  |  3  |  1  |  1  |  3  |  4  |  3  |  1  |
+ |-----------------------------------------------------------|
+ |  5  |  5  |  5  |  5  |  3  |  3  |  5  |  5  |  5  |  5  |
+ |-----------------------------------------------------------|
+ |  1  |  2  |  2  |  3  |  1  |  1  |  3  |  2  |  2  |  1  |
+ ,-----------------------------------------------------------,
+*/
+int scores[] = {
+    1, 3, 4, 3, 1, 1, 3, 4, 3, 1,
+    5, 5, 5, 5, 3, 3, 5, 5, 5, 5,
+    1, 2, 2, 3, 1, 1, 3, 2, 2, 1};
+
 // Template
 template <class T>
 void shuffle(T ary[], int size)
 {
     for (int i = 0; i < size; i++)
     {
+        bool shuffle_flg = true;
         int j = rand() % size;
-        T t = ary[i];
-        ary[i] = ary[j];
-        ary[j] = t;
+        for (auto itr = fix_key.begin(); itr != fix_key.end(); ++itr)
+            if (itr->second == i || itr->second == j)
+                shuffle_flg = false;
+        if (shuffle_flg)
+        {
+            T t = ary[i];
+            ary[i] = ary[j];
+            ary[j] = t;
+        }
     }
 }
-/*
-QWERTY layout
- .-----------------------------------------------------------.
- |  Q  |  W  |  E  |  R  |  T  |  Y  |  U  |  I  |  O  |  P  |
- |-----------------------------------------------------------|
- |  A  |  S  |  D  |  F  |  G  |  H  |  J  |  K  |  L  |  ;  |
- |-----------------------------------------------------------|
- |  Z  |  X  |  C  |  V  |  B  |  N  |  M  |  ,  |  .  |  /  |
- ,-----------------------------------------------------------,
-*/
-
-/*
-ASCII Index(A-Z + ;,./)
- .------------------------------------------------------------------------.
- |  0   |  1   |  2   |  3   |  4   |  5   |  6   |  7    |  8    |  9    |
- |------------------------------------------------------------------------|
- |  10  |  11  |  12  |  13  |  14  |  15  |  16  |  17   |  18   |  19   |
- |------------------------------------------------------------------------|
- |  20  |  21  |  22  |  23  |  24  |  25  |  -6  |  -21  |  -19  |  -18  |
- ,------------------------------------------------------------------------,
-*/
-
-/*
-Scores of arrangement
- .-----------------------------------------------------------.
- |  1  |  3  |  4  |  3  |  2  |  2  |  3  |  4  |  3  |  1  |
- |-----------------------------------------------------------|
- |  5  |  5  |  5  |  5  |  3  |  3  |  5  |  5  |  5  |  5  |
- |-----------------------------------------------------------|
- |  1  |  2  |  2  |  3  |  2  |  2  |  3  |  2  |  2  |  1  |
- ,-----------------------------------------------------------,
-*/
-int scores[] = {
-    1, 3, 4, 3, 2, 2, 3, 4, 3, 1,
-    5, 5, 5, 5, 3, 3, 5, 5, 5, 5,
-    1, 2, 2, 3, 2, 2, 3, 2, 2, 1};
-
-// parameter
-//////////////////
-int individual_number = 60; // 個体生成数
-int generation_number = 8000; // 世代数
-/////////////////
 
 void show_keymap(int keymap[])
 {
@@ -70,7 +77,6 @@ void show_keymap(int keymap[])
         if (i % 10 == 0)
             cout << ".-----------------------------------------------------------." << endl;
         cout << "|  " << (char)(keymap[i] + 65) << "  ";
-        // cout << "|  " << keymap[i] << "  ";
         if (i % 10 == 9)
             cout << "|" << endl;
         if (i == 29)
@@ -80,16 +86,39 @@ void show_keymap(int keymap[])
 
 void initialize(int keymap[], bool do_shuffle = true)
 {
+    // 固定するキー
+    for (auto itr = fix_key.begin(); itr != fix_key.end(); ++itr)
+    {
+        keymap[itr->second] = itr->first;
+    }
+    cout << "fix keys" << endl;
+    show_keymap(keymap);
+
     // A-Z
     for (int i = 0; i < 26; i++)
     {
-        keymap[i] = i;
+        if (fix_key.find(i) == fix_key.end())
+            for (int j = 0; j < 30; j++)
+                if (keymap[j] == -1)
+                {
+                    keymap[j] = i;
+                    break;
+                }
     }
     // ; , . /
-    keymap[26] = 59 - 65;
-    keymap[27] = 44 - 65;
-    keymap[28] = 46 - 65;
-    keymap[29] = 47 - 65;
+    int sp[] = {(int)';' - 65, (int)',' - 65, (int)'.' - 65, (int)'/' - 65};
+    for (auto s : sp)
+    {
+        if (fix_key.find(s) == fix_key.end())
+            for (int i = 0; i < 30; i++)
+            {
+                if (keymap[i] == -1)
+                {
+                    keymap[i] = s;
+                    break;
+                }
+            }
+    }
 
     if (do_shuffle)
         shuffle<int>(keymap, 30);
@@ -134,11 +163,18 @@ void GA(int keymap[][31])
                 int cross_index = elite;
                 while (cross_index == elite)
                     cross_index = rand() % individual_number;
-                int cross1 = 0, cross2 = 0;
+
+                int cross1 = -1, cross2 = -1;
                 while (cross1 == cross2)
                 {
                     cross1 = rand() % 30;
                     cross2 = rand() % 30;
+                    for (auto itr = fix_key.begin(); itr != fix_key.end(); ++itr)
+                        if (itr->second == cross1 || itr->second == cross2)
+                        {
+                            cross1 = cross2 = -1;
+                            break;
+                        }
                 }
                 int tmp = keymap[cross_index][cross1];
                 keymap[cross_index][cross1] = keymap[cross_index][cross2];
@@ -176,18 +212,22 @@ void GA(int keymap[][31])
         }
 
         // エリート表示
-        cout << "Generation: " << loop << endl;
+        cout << "Generation: " << loop + 1 << endl;
         show_keymap(keymap[elite_index]);
     }
+    return;
 }
 
 int main(int argc, char const *argv[])
 {
     srand((unsigned)time(NULL));
-    int keymap[individual_number][31] = {}; // keymap30 + fitness
+    int keymap[individual_number][31]; // keymap30 + fitness
+    for (int i = 0; i < individual_number; i++)
+        for (int j = 0; j < 31; j++)
+            keymap[i][j] = -1;
 
     for (int i = 0; i < individual_number; i++)
-        initialize(keymap[i], false);
+        initialize(keymap[i], true);
 
     // GA開始
     GA(keymap);
