@@ -8,8 +8,8 @@ using namespace std;
 
 // parameter
 //////////////////
-int individual_number = 360;   // 個体生成数
-int generation_number = 36000; // 世代数
+int individual_number = 40;   // 個体生成数
+int generation_number = 2000; // 世代数
 /////////////////
 
 // あらかじめ配置を固定するキーを定義
@@ -32,10 +32,14 @@ map<int, int> fix_key = {
     {(int)('A' - 65), 10},
     {(int)('Q' - 65), 0},
     {(int)('W' - 65), 1},
-    {(int)('J' - 65), 27},
-    {(int)('K' - 65), 17},
-    {(int)('H' - 65), 26},
+    {(int)('J' - 65), 26},
+    {(int)('K' - 65), 27},
+    {(int)('H' - 65), 25},
     {(int)('L' - 65), 28},
+    {(int)('O' - 65), 11},
+    {(int)('E' - 65), 12},
+    {(int)('I' - 65), 13},
+    {(int)('U' - 65), 14},
 };
 
 /*
@@ -50,7 +54,7 @@ Scores of arrangement
 */
 int scores[] = {
     1, 3, 4, 3, 1, 1, 3, 4, 3, 1,
-    5, 6, 6, 6, 3, 3, 6, 6, 6, 5,
+    5, 6, 6, 6, 2, 2, 6, 6, 6, 5,
     1, 2, 2, 3, 1, 1, 3, 2, 2, 1};
 
 // Template
@@ -73,10 +77,14 @@ void shuffle(T ary[], int size)
     }
 }
 
+struct keymap
+{
+    int key[30];
+    double fitness;
+};
+
 void show_keymap(int keymap[])
 {
-    cout << "Fitness: " << keymap[30] << endl
-         << endl;
     for (int i = 0; i < 30; i++)
     {
         if (i % 10 == 0)
@@ -89,84 +97,88 @@ void show_keymap(int keymap[])
     }
 }
 
-void initialize(int keymap[], bool do_shuffle = true)
+void initialize(struct keymap keymaps[], bool do_shuffle = true)
 {
-    // 固定するキー
-    for (auto itr = fix_key.begin(); itr != fix_key.end(); ++itr)
+    // initialize
+    for (int i = 0; i < individual_number; i++)
     {
-        keymap[itr->second] = itr->first;
+        for (int j = 0; j < 30; j++)
+        {
+            keymaps[i].key[j] = -1;
+        }
     }
-    cout << "fix keys" << endl;
-    show_keymap(keymap);
-
-    // A-Z
-    for (int i = 0; i < 26; i++)
+   int sp[] = {(int)';' - 65, (int)',' - 65, (int)'.' - 65, (int)'/' - 65};
+    for (int i = 0; i < individual_number; i++)
     {
-        if (fix_key.find(i) == fix_key.end())
-            for (int j = 0; j < 30; j++)
-                if (keymap[j] == -1)
+        // fix keys
+        for (auto itr = fix_key.begin(); itr != fix_key.end(); ++itr)
+        {
+            keymaps[i].key[itr->second] = itr->first;
+        }
+        // A-Z
+        for (int j = 0; j < 26; j++) // alphabet loop
+        {
+            if (fix_key.find(j) == fix_key.end()) // not found
+                for (int k = 0; k < 30; k++)      // array loop
+                    if (keymaps[i].key[k] == -1)
+                    {
+                        keymaps[i].key[k] = j;
+                        break;
+                    }
+        }
+        // ;,./
+        for (auto s : sp) // spetial word loop
+        {
+            if (fix_key.find(s) == fix_key.end())
+                for (int j = 0; j < 30; j++) // array loop
                 {
-                    keymap[j] = i;
-                    break;
+                    if (keymaps[i].key[j] == -1)
+                    {
+                        keymaps[i].key[j] = s;
+                        break;
+                    }
                 }
+        }
+        if (do_shuffle)
+            shuffle<int>(keymaps[i].key, 30);
     }
-    // ; , . /
-    int sp[] = {(int)';' - 65, (int)',' - 65, (int)'.' - 65, (int)'/' - 65};
-    for (auto s : sp)
-    {
-        if (fix_key.find(s) == fix_key.end())
-            for (int i = 0; i < 30; i++)
-            {
-                if (keymap[i] == -1)
-                {
-                    keymap[i] = s;
-                    break;
-                }
-            }
-    }
-
-    if (do_shuffle)
-        shuffle<int>(keymap, 30);
 }
 
-// 単語の出現回数を返す(http://www7.plala.or.jp/dvorakjp/hinshutu.htm)
-int get_word_freqency(int key)
+// 単語の出現割合を返す(http://www7.plala.or.jp/dvorakjp/hinshutu.htm)
+double get_word_freqency(int key)
 {
+    map<int, int> index;
+    for (int i = 0; i < 26; i++)
+    {
+        index[i] = i;
+    }
+    index[-6] = 26;
+    index[-21] = 27;
+    index[-19] = 28;
+    index[-18] = 29;
     int word_freqency[] = {
         3452, 672, 1306, 1582, 4663, 811, 744, 1739, 2914, 84,
         366, 1583, 1092, 2767, 2882, 827, 34, 2543, 2850, 3445,
-        1207, 408, 694, 72, 733, 32};
+        1207, 408, 694, 72, 733, 32, 32, 440, 661, 0};
+    int sum_of_word_freqency = 40869;
 
     int rome_freqency[] = {
         25130, 1683, 0, 3939, 13794, 39, 3791, 5365, 23949, 0,
         12097, 0, 5028, 15233, 21651, 389, 0, 9544, 10856, 13626,
-        18122, 16, 4366, 0, 7605, 2818};
+        18122, 16, 4366, 0, 7605, 2818, 5, 2905, 2012, 0};
+    int sum_of_rome_freqency = 203984;
 
-    switch (key)
-    {
-    case -6:
-        return 32 + 5; // ;
-    case -21:
-        return 440 + 2905; // ,
-    case -19:
-        return 661 + 2012; // .
-    case -18:
-        0 + 0; // /
-    default:
-        return word_freqency[key] + rome_freqency[key];
-    }
-
-    return 0;
+    return (double)word_freqency[index[key]] / sum_of_word_freqency + (double)rome_freqency[index[key]] / sum_of_rome_freqency;
 }
 
-void GA(int keymap[][31])
+void GA(struct keymap keymaps[])
 {
     int crossing_number = individual_number / 2; // 1世代で交叉する数
     int elite_index = 0;                         // エリートのインデックス
     struct local
     {
         // エリート以外を交叉(というより近傍解生成)
-        static void do_crossing(int crossing_number, int keymap[][31], int elite)
+        static void do_crossing(int crossing_number, struct keymap keymaps[], int elite)
         {
             for (int i = 0; i < crossing_number; i++)
             {
@@ -186,44 +198,47 @@ void GA(int keymap[][31])
                             break;
                         }
                 }
-                int tmp = keymap[cross_index][cross1];
-                keymap[cross_index][cross1] = keymap[cross_index][cross2];
-                keymap[cross_index][cross2] = tmp;
+                int tmp = keymaps[cross_index].key[cross1];
+                keymaps[cross_index].key[cross1] = keymaps[cross_index].key[cross2];
+                keymaps[cross_index].key[cross2] = tmp;
             }
         }
         // 適応度計算
-        static void calculate_fitness(int keymap[][31])
+        static void calculate_fitness(struct keymap keymaps[])
         {
             for (int i = 0; i < individual_number; i++)
             {
-                int fitness = 0;
+                double fitness = 0.0;
                 for (int j = 0; j < 30; j++)
                 {
-                    fitness += scores[j] * get_word_freqency(keymap[i][j]);
+                    fitness += scores[j] * get_word_freqency(keymaps[i].key[j]);
                 }
-                keymap[i][30] = fitness;
+                keymaps[i].fitness = fitness;
             }
         }
     };
 
     for (int loop = 0; loop < generation_number; loop++)
     {
-        local::do_crossing(crossing_number, keymap, elite_index);
-        local::calculate_fitness(keymap);
+        local::do_crossing(crossing_number, keymaps, elite_index);
+        local::calculate_fitness(keymaps);
         // エリート保存
-        int max_fitness = -1;
+        double max_fitness = -1;
         for (int j = 0; j < individual_number; j++)
         {
-            if (keymap[j][30] > max_fitness)
+            if (keymaps[j].fitness > max_fitness)
             {
-                max_fitness = keymap[j][30];
+                max_fitness = keymaps[j].fitness;
                 elite_index = j;
             }
         }
 
         // エリート表示
-        cout << "Generation: " << loop + 1 << endl;
-        show_keymap(keymap[elite_index]);
+        if (loop % 100 == 99)
+        {
+            cout << "Generation: " << loop + 1 << " fitness: " << keymaps[elite_index].fitness << endl;
+            show_keymap(keymaps[elite_index].key);
+        }
     }
     return;
 }
@@ -231,16 +246,9 @@ void GA(int keymap[][31])
 int main(int argc, char const *argv[])
 {
     srand((unsigned)time(NULL));
-    int keymap[individual_number][31]; // keymap30 + fitness
-    for (int i = 0; i < individual_number; i++)
-        for (int j = 0; j < 31; j++)
-            keymap[i][j] = -1;
-
-    for (int i = 0; i < individual_number; i++)
-        initialize(keymap[i], true);
-
-    // GA開始
-    GA(keymap);
+    struct keymap keymaps[individual_number];
+    initialize(keymaps, true);
+    GA(keymaps);
 
     return 0;
 }
