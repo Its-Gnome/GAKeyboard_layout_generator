@@ -127,7 +127,7 @@ void initialize(struct keymap keymaps[], bool do_shuffle = true)
                     }
         }
         // ;,./
-        for (auto s : sp) // spetial word loop
+        for (auto s : sp) // special word loop
         {
             if (fix_key.find(s) == fix_key.end())
                 for (int j = 0; j < 30; j++) // array loop
@@ -157,15 +157,15 @@ double get_word_freqency(int key)
     index[-19] = 28;
     index[-18] = 29;
     int word_freqency[] = {
-        3452, 672, 1306, 1582, 4663, 811, 744, 1739, 2914, 84,
-        366, 1583, 1092, 2767, 2882, 827, 34, 2543, 2850, 3445,
-        1207, 408, 694, 72, 733, 32, 32, 440, 661, 0};
+        3452, 672,  1306, 1582, 4663, 811, 744, 1739, 2914, 84,
+        366,  1583, 1092, 2767, 2882, 827, 34,  2543, 2850, 3445,
+        1207, 408,  694,  72,   733,  32,  32,  440,  661,  0};
     int sum_of_word_freqency = 40869;
 
     int rome_freqency[] = {
-        25130, 1683, 0, 3939, 13794, 39, 3791, 5365, 23949, 0,
-        12097, 0, 5028, 15233, 21651, 389, 0, 9544, 10856, 13626,
-        18122, 16, 4366, 0, 7605, 2818, 5, 2905, 2012, 0};
+        25130, 1683, 0,    3939,  13794,  39,   3791, 5365, 23949, 0,
+        12097, 0,    5028, 15233, 21651,  389,  0,    9544, 10856, 13626,
+        18122, 16,   4366, 0,     7605,   2818, 5,    2905, 2012,  0};
     int sum_of_rome_freqency = 203984;
 
     return (double)word_freqency[index[key]] / sum_of_word_freqency + (double)rome_freqency[index[key]] / sum_of_rome_freqency;
